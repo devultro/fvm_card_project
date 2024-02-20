@@ -1,26 +1,23 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+// import 'package:fvm_card_project/Presentation/screen/platformpage.dart';
+import 'package:fvm_card_project/core/utilities.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
 
 import 'Presentation/screen/home_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: HomeScreen(
-      //     readCard: () {
-      //   return this._readTag(this.context);
-      // }
-      ),
+    return const MaterialApp(
+      home: HomeScreen()
     );
   }
 
@@ -28,10 +25,9 @@ class MyApp extends StatelessWidget {
   // Exception? error;
   // final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
   // new GlobalKey<ScaffoldMessengerState>();
-  // PageController? topController;
-
+  // WebViewManager webview = WebViewManager();
+  //
   // Future<bool> _readTag(BuildContext context) async {
-  //   // Because we are launching an modal bottom sheet, user should not be able to intereact with the app anymore
   //   assert(!_reading);
   //
   //   _reading = true;
@@ -46,22 +42,38 @@ class MyApp extends StatelessWidget {
   //   }
   //
   //   final script = await rootBundle.loadString('assets/read.js');
-  //   // Reload before read to ensure an clear state
   //   await webview.reload();
   //   await webview.run(script);
-  //   // this._mockRead();
   //
   //   bool cardRead = true;
   //   if ((await modal) != true) {
-  //     // closed by user, reject the promise
   //     await webview.run("pollErrorCallback('User cancelled operation')");
   //     cardRead = false;
   //   }
-  //
   //   _reading = false;
   //   return cardRead;
   // }
+  //
+  // Widget _buildReadModal(BuildContext context) {
+  //   return Container(
+  //       child: Padding(
+  //           padding: const EdgeInsets.all(32),
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.center,
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: <Widget>[
+  //               Text(
+  //                 'Hold your phone near the NFC card / tag...',
+  //                 textAlign: TextAlign.center,
+  //                 style: TextStyle(fontSize: 18),
+  //               ),
+  //               SizedBox(height: 10),
+  //               Image.asset('assets/read.webp', height: 200),
+  //             ],
+  //           )));
+  // }
 
 }
+
 
 
