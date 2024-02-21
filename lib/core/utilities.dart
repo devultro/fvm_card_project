@@ -5,7 +5,9 @@ import 'dart:developer';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fvm_card_project/model/card.dart';
 import 'package:fvm_card_project/model/models.dart';
+
 // import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -63,9 +65,9 @@ extension PlatformExceptionExtension on PlatformException {
   }
 }
 
-enum WebViewOwner { Main, Script }
+enum WebViewOwner { Home }
 
-WebViewOwner webviewOwner = WebViewOwner.Main;
+WebViewOwner webviewOwner = WebViewOwner.Home;
 
 // Actually this should be an ADT, but Dart doesn't have that (yet)
 class WebViewEvent {
@@ -82,7 +84,7 @@ class WebViewManager {
   WebViewController? _cont;
 
   late JavascriptChannel channel =
-  JavascriptChannel(name: "nfsee", onMessageReceived: _dispatch);
+      JavascriptChannel(name: "nfsee", onMessageReceived: _dispatch);
 
   _dispatch(JavascriptMessage msg) {
     log("[Webview] Incoming msg ${msg.message}");
@@ -126,45 +128,48 @@ class WebViewManager {
   }
 }
 
-List<Detail> parseTransactionDetails(
-    Map<String, dynamic> _data, BuildContext context) {
-  // make a copy
-  var data = {}..addAll(_data);
-  data.remove('amount');
-  data.remove('date');
-  data.remove('time');
-
-  var details = <Detail>[];
-
-  void addDetail(String fieldName, /*String parsedName,*/
-      [IconData? icon, transformer]) {
-    _addDetail(data, details, fieldName, /*parsedName,*/ icon, transformer);
-  }
-
-  addDetail('number', /*S(context).transactionNumber,*/ Icons.bookmark);
-  addDetail('terminal', /*S(context).terminal,*/ Icons.place);
-  addDetail(
-      'subway_exit',
-      /* S(context).subwayExit,*/
-      Icons.subway,
-          (s) => (getEnumFromString<BeijingSubway>(BeijingSubway.values, s))!
-          .getName(context));
-  addDetail('type', /*S(context).type*/);
-  addDetail('country_code', /*S(context).countryCode,*/ Icons.map);
-  addDetail('currency', /*S(context).currency,*/ Icons.local_atm);
-  addDetail('amount_other', /*S(context).amountOther,*/ Icons.attach_money);
-
-  // all remaining data, clone to avoid concurrent modificationL
-  final remain = {}..addAll(data);
-  remain.forEach(
-          (k, _) => addDetail(k, /*'${S(context).rawData}: $k',*/ Icons.error));
-
-  return details;
-}
+// List<Detail> parseTransactionDetails(
+//     Map<String, dynamic> _data, BuildContext context) {
+//   // make a copy
+//   var data = {}..addAll(_data);
+//   data.remove('amount');
+//   data.remove('date');
+//   data.remove('time');
+//
+//   var details = <Detail>[];
+//
+//   void addDetail(String fieldName, String parsedName,
+//       [IconData? icon, transformer]) {
+//     _addDetail(data, details, fieldName, parsedName, icon, transformer);
+//   }
+//
+//   addDetail('number', S(context).transactionNumber, Icons.bookmark);
+//   addDetail('terminal', S(context).terminal, Icons.place);
+//   addDetail(
+//       'subway_exit',
+//        S(context).subwayExit,
+//       Icons.subway,
+//           (s) => (getEnumFromString<BeijingSubway>(BeijingSubway.values, s))!
+//           .getName(context));
+//   addDetail('type', S(context).type);
+//   addDetail('country_code', S(context).countryCode, Icons.map);
+//   addDetail('currency', S(context).currency, Icons.local_atm);
+//   addDetail('amount_other', S(context).amountOther, Icons.attach_money);
+//
+//   // all remaining data, clone to avoid concurrent modificationL
+//   final remain = {}..addAll(data);
+//   remain.forEach(
+//           (k, _) => addDetail(k, '${S(context).rawData}: $k', Icons.error));
+//
+//   return details;
+// }
+// CardData? detail;
+// var data1 = detail!.raw;
 
 List<Detail> parseCardDetails(
     Map<String, dynamic> _data, BuildContext context) {
   // make a copy and remove transactions & ndef, the remaining fields are all details
+  // var data = {}..addAll(detail!.raw["detail"]);
   var data = {}..addAll(_data);
   data.remove('transactions');
   data.remove('ndef');
@@ -172,75 +177,72 @@ List<Detail> parseCardDetails(
 
   var details = <Detail>[];
 
-  void addDetail(String fieldName, /*String parsedName,*/
+  void addDetail(String fieldName, String parsedName,
       [IconData? icon, transformer]) {
-    _addDetail(data, details, fieldName, /*parsedName,*/ icon, transformer);
+    _addDetail(data, details, fieldName, parsedName, icon, transformer);
   }
 
   // all cards
-  addDetail('card_number', /*S(context).cardNumber,*/ Icons.credit_card);
+  addDetail('card_number', 'Card Number', Icons.credit_card);
   // THU
-  addDetail('internal_number', /*S(context).internalNumber,*/ Icons.credit_card);
+  addDetail('internal_number', 'Internal Number', Icons.credit_card);
   // China ID
-  addDetail('ic_serial', /*S(context).icSerial,*/ Icons.sim_card);
+  addDetail('ic_serial', 'IC Serial No.', Icons.sim_card);
   // China ID
-  addDetail('mgmt_number', /*S(context).mgmtNumber,*/ Icons.credit_card);
+  addDetail('mgmt_number', 'Card Management No.', Icons.credit_card);
   // PBOC
-  addDetail('name', /*S(context).holderName,*/ Icons.person);
+  addDetail('name', 'Holder Name', Icons.person);
   // PBOC
-  addDetail('balance', /*S(context).balance,*/ Icons.account_balance,
-      formatTransactionBalance);
+  addDetail(
+      'balance', 'Balance', Icons.account_balance, formatTransactionBalance);
   // T Union
-  addDetail('tu_type', /*S(context).tuType,*/ Icons.person);
+  addDetail('tu_type', 'TUnion Card Type', Icons.person);
   // T Union
-  addDetail('province', /*S(context).province,*/ Icons.home);
+  addDetail('province', 'Province', Icons.home);
   // City Union / T Union
-  addDetail('city', /*S(context).city,*/ Icons.home);
+  addDetail('city', 'City', Icons.home);
   // City Union / T Union
-  addDetail('issue_date', /*S(context).issueDate,*/ Icons.calendar_today,
-      formatTransactionDate);
+  addDetail(
+      'issue_date', 'Issue Date', Icons.calendar_today, formatTransactionDate);
   // PBOC
-  addDetail('expiry_date',/* S(context).expiryDate,*/ Icons.calendar_today,
+  addDetail('expiry_date', 'Expiry Date', Icons.calendar_today,
       formatTransactionDate);
   // THU
-  addDetail('display_expiry_date', /*S(context).displayExpiryDate,*/
-      Icons.calendar_today, formatTransactionDate);
+  addDetail('display_expiry_date', 'Expiry Date on Card', Icons.calendar_today,
+      formatTransactionDate);
   // PPSE
-  addDetail('expiration',/* S(context).validUntil,*/ Icons.calendar_today);
+  addDetail('expiration', 'Valid Until', Icons.calendar_today);
   // PBOC
-  addDetail('purchase_atc', /*'${S(context).atc} (${S(context).purchase})',*/
+  addDetail('purchase_atc', '${'Transaction Counter'} (${'Purchase'})',
       Icons.exposure_neg_1);
   // PBOC
-  addDetail('load_atc',/* '${S(context).atc} (${S(context).strLoad})',*/
+  addDetail('load_atc', '${'Transaction Counter'} (${'Load'})',
       Icons.exposure_plus_1);
   // PPSE
-  addDetail('atc', Icons.exposure_plus_1);
+  addDetail('atc', 'Transaction Counter', Icons.exposure_plus_1);
   // PPSE
-  addDetail('pin_retry', /*S(context).pinRetry,*/ Icons.lock);
+  addDetail('pin_retry', 'Remaining PIN Retry Counter', Icons.lock);
   // Mifare
-  addDetail('mifare_vendor', /*S(context).mifareVendor,*/ Icons.copyright);
+  addDetail('mifare_vendor', 'MIFARE Vendor', Icons.copyright);
+  addDetail('mifare_product_type', 'MIFARE Product Type', Icons.looks_one);
   addDetail(
-      'mifare_product_type',/* S(context).mifareProductType,*/ Icons.looks_one);
-  addDetail('mifare_product_subtype', /*S(context).mifareProductSubtype,*/
-      Icons.looks_two);
-  addDetail('mifare_product_version', /*S(context).mifareProductVersion,*/
-      Icons.text_fields);
-  addDetail('mifare_product_name',/* S(context).mifareProductName,*/
+      'mifare_product_subtype', 'MIFARE Product Subtype', Icons.looks_two);
+  addDetail(
+      'mifare_product_version', 'MIFARE Product Version', Icons.text_fields);
+  addDetail('mifare_product_name', 'MIFARE Product Version',
       Icons.branding_watermark);
+  addDetail('mifare_storage_size', 'MIFARE Storage Size', Icons.format_size);
   addDetail(
-      'mifare_storage_size', /*S(context).mifareStorageSize,*/ Icons.format_size);
-  addDetail('mifare_production_date',/* S(context).mifareProductionDate,*/
-      Icons.date_range);
+      'mifare_production_date', 'MIFARE Production Date', Icons.date_range);
   // all remaining data, clone to avoid concurrent modification
   final remain = {}..addAll(data);
-  remain.forEach(
-          (k, _) => addDetail(k, /*'${S(context).rawData}: $k',*/ Icons.error));
+  remain.forEach((k, _) => addDetail(k, '${'Raw data'}: $k', Icons.error));
 
   return details;
 }
 
 void _addDetail(Map<dynamic, dynamic> data, List<Detail> details,
-    String fieldName, /*String parsedName,*/
+    String fieldName, String parsedName,
     [IconData? icon, transformer]) {
   // optional parameters
   if (icon == null) icon = Icons.list;
@@ -250,7 +252,7 @@ void _addDetail(Map<dynamic, dynamic> data, List<Detail> details,
   // check existence and add to list
   if (data[fieldName] != null) {
     details.add(Detail(
-      /* name: parsedName,*/ value: transformer(data[fieldName]), icon: icon));
+        name: parsedName, value: transformer(data[fieldName]), icon: icon));
     data.remove(fieldName);
   }
 }

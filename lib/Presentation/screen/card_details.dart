@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:fvm_card_project/core/utilities.dart';
+import 'package:fvm_card_project/model/card.dart';
+import 'package:fvm_card_project/model/models.dart';
 
 import '../../utils/colors/custom_color.dart';
 import '../widgets/my_text_field.dart';
 import 'congratulations_screen.dart';
 
 class CardDetailsScreen extends StatelessWidget {
-  const CardDetailsScreen({super.key});
+  CardDetailsScreen(  {super.key, required this.card_number});
+
+  final String card_number;
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +20,9 @@ class CardDetailsScreen extends StatelessWidget {
     final cvvController = TextEditingController();
     final expirtDateController = TextEditingController();
     final Controller = TextEditingController();
+    CardData? detail;
+    // var  data = detail!.raw["detail"];
+    // print('card screen data = $data');
 
     return Scaffold(
       appBar: AppBar(
@@ -116,6 +124,7 @@ class CardDetailsScreen extends StatelessWidget {
               const SizedBox(
                 height: 30,
               ),
+              Text('card number ==${card_number}'),
               MyTextField(
                   controller: fNameController,
                   hintText: 'First Name',

@@ -8,6 +8,9 @@ import 'package:flutter/services.dart';
 import 'package:fvm_card_project/Presentation/screen/card_details.dart';
 import 'package:fvm_card_project/Presentation/widgets/header.dart';
 import 'package:fvm_card_project/core/utilities.dart';
+import 'package:fvm_card_project/core/utilities.dart';
+import 'package:fvm_card_project/core/utilities.dart';
+import 'package:fvm_card_project/model/card.dart';
 import 'package:fvm_card_project/model/models.dart';
 import 'package:fvm_card_project/utils/colors/custom_color.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -41,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _initSelf() {
     _webViewListener =
-        webview.stream(WebViewOwner.Main).listen(_onReceivedMessage);
+        webview.stream(WebViewOwner.Home).listen(onReceivedMessage);
     // topController = PageController(
     //   initialPage: this.currentTop,
     // );
@@ -63,18 +66,38 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _onReceivedMessage(WebViewEvent ev) async {
+  void onReceivedMessage(WebViewEvent ev) async {
     if (ev.reload) return; // Main doesn't care about reload events
     assert(ev.message != null);
 
     var scriptModel = ScriptDataModel.fromJson(json.decode(ev.message!));
-    log('[Main] Received action ${scriptModel.action} from script');
+    // log('[Main] Received action ${scriptModel.action} from script');
+    log('[Main] Received data ${scriptModel.data} from script');
+
+    if (scriptModel.data != null || scriptModel.data ==null) {
+      // log('Null data received');
+      try {
+        log('[Main] Received action====== ${scriptModel.data['detail']} from script');
+        Map<String,dynamic> detail = scriptModel.data['detail'];
+        String Card_number = detail['card_number'];
+        log('this is a card number ====== ${Card_number} ');
+
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => CardDetailsScreen(card_number: Card_number,)));
+      } catch (e) {
+        log(e.toString());
+      }
+    }
+
+
     switch (scriptModel.action) {
       case 'poll':
         error = null;
         try {
-          final tag =
-              await FlutterNfcKit.poll(iosAlertMessage: 'Hold your phone near the NFC card / tag...');
+          final tag = await FlutterNfcKit.poll(
+              iosAlertMessage: 'Hold your phone near the NFC card / tag...');
           final json = tag.toJson();
 
           // try to read ndef and insert into json
@@ -95,8 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
           log('Poll error: ${e.toDetailString()}');
           _closeReadModal(this.context);
           showSnackbar(SnackBar(
-              content:
-                  Text('${'Read failed'}: ${e.toDetailString()}')));
+              content: Text('${'Read failed'}: ${e.toDetailString()}')));
           // reject the promise
           await webview.run("pollErrorCallback(${e.toJsonString()})");
         }
@@ -111,14 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
           await webview.run("transceiveCallback('$rapdu')");
         } on PlatformException catch (e) {
           error = e;
-          // we need to explicitly finish the reader session now **in the script** to stop any following operations,
-          // otherwise a following poll might crash the entire application,
-          // because ReaderMode is still enabled, and the obselete MethodChannel.Result will be re-used.
           log('Transceive error: ${e.toDetailString()}');
           _closeReadModal(this.context);
           showSnackbar(SnackBar(
-              content:
-                  Text('${'Read failed'}: ${e.toDetailString()}')));
+              content: Text('${'Read failed'}: ${e.toDetailString()}')));
           await webview.run("transceiveErrorCallback(${e.toJsonString()})");
         }
         break;
@@ -154,265 +172,249 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       new GlobalKey<ScaffoldMessengerState>();
 
-  // PageController? topController;
   WebViewManager webview = WebViewManager();
   StreamSubscription? _webViewListener;
+
+  // CardData? detail;
+
+  // late final CardData detail;
 
   // int currentTop = 1;
 
   @override
   Widget build(BuildContext context) {
-    // WebViewManager webview = WebViewManager();
+    // var data1 = detail.raw;
 
+    // final detailTiles =
+    //     parseCardDetails(data1["detail"], context).map((d) => ListTile(
+    //           dense: true,
+    //           title: Text(d.name!),
+    //           subtitle: Text(d.value!),
+    //           leading: Icon(d.icon ?? Icons.info),
+    //         ));
     return Scaffold(
-      bottomNavigationBar: BottomNavigationBar(
-        elevation: 10,
-        backgroundColor: Colors.blue,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home),
-            label: "Home",
-            backgroundColor: CustomColors.blue.withOpacity(0.8),
-          ),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.document_scanner), label: "Permission"),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.payment), label: "Payments"),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.settings), label: "Setting"),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(child:  WebView(
-            onWebViewCreated: webview.onWebviewInit,
-            onPageFinished: webview.onWebviewPageLoad,
-            javascriptMode: JavascriptMode.unrestricted,
-            javascriptChannels: {webview.channel},
-          ),),
-          Positioned.fill(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Header(),
-              const CardView(),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: Text(
-                  'Hello User,',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+        bottomNavigationBar: BottomNavigationBar(
+          elevation: 10,
+          backgroundColor: Colors.blue,
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.home),
+              label: "Home",
+              backgroundColor: CustomColors.blue.withOpacity(0.8),
+            ),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.document_scanner), label: "Permission"),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.payment), label: "Payments"),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.settings), label: "Setting"),
+          ],
+        ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: WebView(
+                onWebViewCreated: webview.onWebviewInit,
+                onPageFinished: webview.onWebviewPageLoad,
+                javascriptMode: JavascriptMode.unrestricted,
+                javascriptChannels: {webview.channel},
               ),
-              Expanded(
-                child: GridView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                  ),
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Card(
-                        // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.transfer_within_a_station,
-                                  size: 40,
-                                  color: CustomColors.blue,
-                                ),
-                                Text(
-                                  'Transfer',
-                                  style: TextStyle(
-                                      color: CustomColors.black,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ]),
+            ),
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Header(),
+                      const CardView(),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 30),
+                        child: Text(
+                          'Hello User,',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Card(
-                        // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.monetization_on_rounded,
-                                  size: 40,
-                                  color: CustomColors.blue,
-                                ),
-                                Text(
-                                  'Pay bill',
-                                  style: TextStyle(
-                                      color: CustomColors.black,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ]),
+                      GridView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        shrinkWrap: true,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
                         ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Card(
-                        // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.history,
-                                  size: 40,
-                                  color: CustomColors.blue,
-                                ),
-                                Text(
-                                  'View History',
-                                  style: TextStyle(
-                                      color: CustomColors.black,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ]),
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () async {
-                        // final cardRead = await widget.readCard();
-                        // if (!cardRead) return;
-                        // this.addCard();
-                        this._readTag(this.context);
-
-                        log("CARD read");
-                        // showModalBottomSheet<void>(
-                        //   context: context,
-                        //   builder: (BuildContext context) {
-                        //     return SizedBox(
-                        //       height: 380,
-                        //       child: Center(
-                        //         child: Column(
-                        //           // mainAxisAlignment: MainAxisAlignment.start,
-                        //           // mainAxisSize: MainAxisSize.min,
-                        //           children: <Widget>[
-                        //             GestureDetector(
-                        //               child: const Padding(
-                        //                 padding: EdgeInsets.all(10),
-                        //                 child: Row(
-                        //                   mainAxisAlignment: MainAxisAlignment.end,
-                        //                   children: [
-                        //                     Icon(
-                        //                       Icons.cancel,
-                        //                       size: 28,
-                        //                     ),
-                        //                   ],
-                        //                 ),
-                        //               ),
-                        //               onTap: () {
-                        //                 Navigator.pop(context);
-                        //               },
-                        //             ),
-                        //             const Padding(
-                        //               padding: EdgeInsets.only(top: 5),
-                        //               child: Text(
-                        //                 'Ready To Scan',
-                        //                 style: TextStyle(fontSize: 30),
-                        //               ),
-                        //             ),
-                        //             Padding(
-                        //               padding:
-                        //               const EdgeInsets.symmetric(vertical: 25),
-                        //               child: SvgPicture.asset(
-                        //                 'assets/images/contactless.svg',
-                        //                 semanticsLabel: 'My SVG Image',
-                        //               ),
-                        //             ),
-                        //             const Padding(
-                        //               padding: EdgeInsets.symmetric(vertical: 20),
-                        //               child: Text(
-                        //                 'Hold Your Phone Near the Card',
-                        //                 style: TextStyle(fontSize: 18),
-                        //               ),
-                        //             ),
-                        //             SizedBox(
-                        //               width:
-                        //               MediaQuery.of(context).size.width * 0.9,
-                        //               height: 60,
-                        //               child: TextButton(
-                        //                   onPressed: () {
-                        //                     Navigator.push(
-                        //                         context,
-                        //                         MaterialPageRoute(
-                        //                             builder: (context) =>
-                        //                             const CardDetailsScreen()));
-                        //                   },
-                        //                   style: TextButton.styleFrom(
-                        //                       backgroundColor: CustomColors.blue,
-                        //                       foregroundColor: CustomColors.white,
-                        //                       shape: RoundedRectangleBorder(
-                        //                           borderRadius:
-                        //                           BorderRadius.circular(15))),
-                        //                   child: const Text(
-                        //                     "Scan",
-                        //                     style: TextStyle(
-                        //                         fontFamily: "RedHatDisplay",
-                        //                         fontSize: 18,
-                        //                         fontWeight: FontWeight.w500),
-                        //                   )),
-                        //             ),
-                        //           ],
-                        //         ),
-                        //       ),
-                        //     );
-                        //   },
-                        // );
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Card(
-                          // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.tap_and_play,
-                                    size: 40,
-                                    color: CustomColors.blue,
-                                  ),
-                                  Text(
-                                    'Tap to Pay',
-                                    style: TextStyle(
-                                        color: CustomColors.black,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ]),
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Card(
+                              // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.transfer_within_a_station,
+                                        size: 40,
+                                        color: CustomColors.blue,
+                                      ),
+                                      Text(
+                                        'Transfer',
+                                        style: TextStyle(
+                                            color: CustomColors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ]),
+                              ),
+                            ),
                           ),
-                        ),
+                          const Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Card(
+                              // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.monetization_on_rounded,
+                                        size: 40,
+                                        color: CustomColors.blue,
+                                      ),
+                                      Text(
+                                        'Pay bill',
+                                        style: TextStyle(
+                                            color: CustomColors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ]),
+                              ),
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Card(
+                              // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.history,
+                                        size: 40,
+                                        color: CustomColors.blue,
+                                      ),
+                                      Text(
+                                        'View History',
+                                        style: TextStyle(
+                                            color: CustomColors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ]),
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              // final cardRead = await widget.readCard();
+                              // if (!cardRead) return;
+                              // this.addCard();
+                              this._readTag(this.context);
+                              log("CARD read");
+
+                              // log("card reader... data here === ${detail!.raw["detail"]}");
+                              // print('card reader... data here === ${CardDetails().data[detail?.cardNo.toString()]}');
+                              // if (detail!.raw["detail"] != null) {
+                              //   Navigator.push(
+                              //       context,
+                              //       MaterialPageRoute(
+                              //           builder: (context) => CardDetailsScreen(card_number: Card_number,
+                              //               /*parseCardDetails*/)));
+                              // } else {
+                              //   const snackBar =
+                              //       SnackBar(content: Text('card is not read'));
+                              //   ScaffoldMessenger.of(context)
+                              //       .showSnackBar(snackBar);
+                              // }
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Card(
+                                // margin: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                                child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.tap_and_play,
+                                          size: 40,
+                                          color: CustomColors.blue,
+                                        ),
+                                        Text(
+                                          'Tap to Pay',
+                                          style: TextStyle(
+                                              color: CustomColors.black,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ]),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.9,
+                        height: 60,
+                        child: TextButton(
+                            onPressed: () {
+                              // Navigator.push(
+                              //     context,
+                              //     MaterialPageRoute(
+                              //         builder: (context) =>
+                              //         const CardDetailsScreen()));
+                            },
+                            style: TextButton.styleFrom(
+                                backgroundColor: CustomColors.blue,
+                                foregroundColor: CustomColors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15))),
+                            child: const Text(
+                              "Scan",
+                              style: TextStyle(
+                                  fontFamily: "RedHatDisplay",
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500),
+                            )),
+                      ),
+                      // Column(
+                      //   children: <Widget>[
+                      //     detailTiles.length == 0 ? Container() : Divider(),
+                      //     Column(children:<Widget> [...detailTiles]),
+                      //     Divider(),
+                      //   ],
+                      // ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),)
-        ],
-      )
-
-
-
-    );
+            )
+          ],
+        ));
   }
 
   Future<bool> _readTag(BuildContext context) async {
@@ -432,6 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final script = await rootBundle.loadString('assets/read.js');
     await webview.reload();
     await webview.run(script);
+    // print('card reader ${CardDetails().data["action"]}');
 
     bool cardRead = true;
     if ((await modal) != true) {
@@ -481,8 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Padding(
-              padding:
-              const EdgeInsets.symmetric(vertical: 25),
+              padding: const EdgeInsets.symmetric(vertical: 25),
               child: SvgPicture.asset(
                 'assets/images/contactless.svg',
                 semanticsLabel: 'My SVG Image',
@@ -495,51 +497,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(fontSize: 18),
               ),
             ),
-            SizedBox(
-              width:
-              MediaQuery.of(context).size.width * 0.9,
-              height: 60,
-              child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                            const CardDetailsScreen()));
-                  },
-                  style: TextButton.styleFrom(
-                      backgroundColor: CustomColors.blue,
-                      foregroundColor: CustomColors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                          BorderRadius.circular(15))),
-                  child: const Text(
-                    "Scan",
-                    style: TextStyle(
-                        fontFamily: "RedHatDisplay",
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500),
-                  )),
-            ),
+
+            // SizedBox(
+            //   width:
+            //   MediaQuery.of(context).size.width * 0.9,
+            //   height: 60,
+            //   child: TextButton(
+            //       onPressed: () {
+            //         Navigator.push(
+            //             context,
+            //             MaterialPageRoute(
+            //                 builder: (context) =>
+            //                 const CardDetailsScreen()));
+            //       },
+            //       style: TextButton.styleFrom(
+            //           backgroundColor: CustomColors.blue,
+            //           foregroundColor: CustomColors.white,
+            //           shape: RoundedRectangleBorder(
+            //               borderRadius:
+            //               BorderRadius.circular(15))),
+            //       child: const Text(
+            //         "Scan",
+            //         style: TextStyle(
+            //             fontFamily: "RedHatDisplay",
+            //             fontSize: 18,
+            //             fontWeight: FontWeight.w500),
+            //       )),
+            // ),
           ],
         ),
       ),
     );
-    // return Container(
-    //     child: Padding(
-    //         padding: const EdgeInsets.all(32),
-    //         child: Column(
-    //           mainAxisAlignment: MainAxisAlignment.center,
-    //           mainAxisSize: MainAxisSize.min,
-    //           children: <Widget>[
-    //             Text(
-    //               'Hold your phone near the NFC card / tag...',
-    //               textAlign: TextAlign.center,
-    //               style: TextStyle(fontSize: 18),
-    //             ),
-    //             SizedBox(height: 10),
-    //             Image.asset('assets/read.webp', height: 200),
-    //           ],
-    //         )));
   }
 }
