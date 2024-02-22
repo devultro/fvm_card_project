@@ -46,6 +46,8 @@ dependencies:
   package_info_plus: ^4.1.0
   webview_flutter: ^3.0.4
   flutter_nfc_kit: ^3.3.3
+  flutter_stripe: ^10.0.0
+
 #  flutter_localization: ^0.2.0
 
 dev_dependencies:

@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../../utils/colors/custom_color.dart';
 
 class MyTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
+  final TextEditingController? controller;
+  final String? hintText;
   final bool obscureText;
-  final TextInputType keyboardType;
+  final bool redonly;
+  final TextInputType? keyboardType;
   final Widget? suffixIcon;
   final VoidCallback? onTap;
   final Widget? prefixIcon;
@@ -14,18 +15,19 @@ class MyTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final String? Function(String?)? onChanged;
 
+
   const MyTextField(
       {super.key,
-      required this.controller,
-      required this.hintText,
-      required this.obscureText,
-      required this.keyboardType,
+        this.controller,
+        this.hintText,
+       required this.obscureText,
+       this.keyboardType,
       this.suffixIcon,
       this.onTap,
       this.prefixIcon,
       this.focusNode,
       this.onChanged,
-      this.maxline});
+      this.maxline, required this.redonly});
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,7 @@ class MyTextField extends StatelessWidget {
       keyboardType: keyboardType,
       focusNode: focusNode,
       onTap: onTap,
+      readOnly: redonly,
       textInputAction: TextInputAction.next,
       onChanged: onChanged,
       decoration: InputDecoration(

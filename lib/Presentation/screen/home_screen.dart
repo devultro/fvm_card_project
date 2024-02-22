@@ -11,6 +11,7 @@ import 'package:fvm_card_project/core/utilities.dart';
 import 'package:fvm_card_project/core/utilities.dart';
 import 'package:fvm_card_project/core/utilities.dart';
 import 'package:fvm_card_project/model/card.dart';
+import 'package:fvm_card_project/model/card_details.dart';
 import 'package:fvm_card_project/model/models.dart';
 import 'package:fvm_card_project/utils/colors/custom_color.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -19,15 +20,18 @@ import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
 import '../widgets/card_view.dart';
 
 class HomeScreen extends StatefulWidget {
-  // final Future<bool> Function() readCard;
-  const HomeScreen({super.key /*, required this.readCard*/
-      });
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  String? Card_Number;
+  String? Expiry_Date;
+  String? Card_Type;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -65,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _scaffoldMessengerKey.currentState!.showSnackBar(snackBar);
     }
   }
+  late CardDetails carddetails ;
 
   void onReceivedMessage(WebViewEvent ev) async {
     if (ev.reload) return; // Main doesn't care about reload events
@@ -79,13 +84,14 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         log('[Main] Received action====== ${scriptModel.data['detail']} from script');
         Map<String,dynamic> detail = scriptModel.data['detail'];
-        String Card_number = detail['card_number'];
-        log('this is a card number ====== ${Card_number} ');
+        Card_Number = detail['card_number'];
+        Expiry_Date = detail['expiration'];
+        Card_Type = scriptModel.data['card_type'];
+        log('this is a card number ====== ${Card_Number} ');
+        log('this is a expiry date ====== ${Expiry_Date} ');
+        log('this is a card type ======= ${scriptModel.data['card_type']}');
 
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => CardDetailsScreen(card_number: Card_number,)));
+
       } catch (e) {
         log(e.toString());
       }
@@ -104,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
           try {
             final ndef = await FlutterNfcKit.readNDEFRawRecords();
             json["ndef"] = ndef;
+            // print('ndef khushbu === ${json["ndef"]}');
           } on PlatformException catch (e) {
             // allow readNDEF to fail
             json["ndef"] = null;
@@ -326,26 +333,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           GestureDetector(
                             onTap: () async {
-                              // final cardRead = await widget.readCard();
-                              // if (!cardRead) return;
-                              // this.addCard();
+
                               this._readTag(this.context);
                               log("CARD read");
 
-                              // log("card reader... data here === ${detail!.raw["detail"]}");
-                              // print('card reader... data here === ${CardDetails().data[detail?.cardNo.toString()]}');
-                              // if (detail!.raw["detail"] != null) {
-                              //   Navigator.push(
-                              //       context,
-                              //       MaterialPageRoute(
-                              //           builder: (context) => CardDetailsScreen(card_number: Card_number,
-                              //               /*parseCardDetails*/)));
-                              // } else {
-                              //   const snackBar =
-                              //       SnackBar(content: Text('card is not read'));
-                              //   ScaffoldMessenger.of(context)
-                              //       .showSnackBar(snackBar);
-                              // }
+                              if (Card_Number != null /*&& Expiry_Date != null && Card_Type != null*/) {
+                                Timer(Duration(seconds: 5),(){
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => CardDetailsScreen(card_number: Card_Number!, expiry_date: Expiry_Date!, Card_Type: Card_Type!,
+                                            /*parseCardDetails*/)));
+
+                                });
+                              } else {
+                                SnackBar snackBar = SnackBar(
+                                  content: Text('Card is not read...please try again'),
+                                  backgroundColor: Colors.red,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                              }
                             },
                             child: const Padding(
                               padding: EdgeInsets.all(20),
