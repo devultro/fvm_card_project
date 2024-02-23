@@ -50,11 +50,11 @@ class CongratulationsScreen extends StatelessWidget {
                 height: 60,
                 child: TextButton(
                     onPressed: () {
-                      // Navigator.push(
-                      //     context,
-                      //     MaterialPageRoute(
-                      //         builder: (context) =>
-                      //             const HomeScreen()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const HomeScreen()));
                     },
                     style: TextButton.styleFrom(
                         backgroundColor: CustomColors.blue,

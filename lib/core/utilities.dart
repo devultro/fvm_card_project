@@ -1,14 +1,8 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fvm_card_project/model/card.dart';
-import 'package:fvm_card_project/model/models.dart';
-
-// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 String formatTransactionDate(String raw) {
@@ -20,12 +14,13 @@ String formatTransactionTime(String raw) {
 }
 
 String formatTransactionBalance(int raw) {
-  if (raw == 0)
+  if (raw == 0) {
     return "0.00";
-  else if (raw > 0)
+  } else if (raw > 0) {
     return "${(raw / 100).floor()}.${(raw % 100).toString().padLeft(2, "0")}";
-  else
-    return "-" + formatTransactionBalance(-raw);
+  } else {
+    return "-${formatTransactionBalance(-raw)}";
+  }
 }
 
 T? getEnumFromString<T>(Iterable<T> values, String value) {
@@ -48,18 +43,18 @@ List<int> decodeHexString(String hex) {
 extension PlatformExceptionExtension on PlatformException {
   Map<String, dynamic> asMap() {
     return {
-      "code": this.code,
-      "message": this.message,
-      "details": this.details.toString()
+      "code": code,
+      "message": message,
+      "details": details.toString()
     };
   }
 
-  String toJsonString() => jsonEncode(this.asMap());
+  String toJsonString() => jsonEncode(asMap());
 
   String toDetailString() {
-    var result = '${this.code} ${this.message}';
-    if (this.details != null) {
-      result += ' (${this.details.toString()})';
+    var result = '$code $message';
+    if (details != null) {
+      result += ' (${details.toString()})';
     }
     return result;
   }
@@ -69,7 +64,6 @@ enum WebViewOwner { Home }
 
 WebViewOwner webviewOwner = WebViewOwner.Home;
 
-// Actually this should be an ADT, but Dart doesn't have that (yet)
 class WebViewEvent {
   final String? message;
   final bool reload;
@@ -78,7 +72,7 @@ class WebViewEvent {
 }
 
 class WebViewManager {
-  Map<WebViewOwner, StreamController<WebViewEvent>> _streams = {
+  final Map<WebViewOwner, StreamController<WebViewEvent>> _streams = {
     for (final owner in WebViewOwner.values) owner: StreamController.broadcast()
   };
   WebViewController? _cont;
@@ -95,13 +89,13 @@ class WebViewManager {
   onWebviewInit(WebViewController cont) {
     log("[Webview] Init");
     _cont = cont;
-    // Fire and forget
-    this.reload();
+    reload();
   }
 
   onWebviewPageLoad(String _url) {
-    for (final stream in _streams.values)
+    for (final stream in _streams.values) {
       stream.add(WebViewEvent(reload: true));
+    }
   }
 
   Future<void> reload() async {
@@ -124,180 +118,6 @@ class WebViewManager {
   }
 
   Stream<WebViewEvent> stream(WebViewOwner owner) {
-    return this._streams[owner]!.stream;
+    return _streams[owner]!.stream;
   }
 }
-
-// List<Detail> parseTransactionDetails(
-//     Map<String, dynamic> _data, BuildContext context) {
-//   // make a copy
-//   var data = {}..addAll(_data);
-//   data.remove('amount');
-//   data.remove('date');
-//   data.remove('time');
-//
-//   var details = <Detail>[];
-//
-//   void addDetail(String fieldName, String parsedName,
-//       [IconData? icon, transformer]) {
-//     _addDetail(data, details, fieldName, parsedName, icon, transformer);
-//   }
-//
-//   addDetail('number', S(context).transactionNumber, Icons.bookmark);
-//   addDetail('terminal', S(context).terminal, Icons.place);
-//   addDetail(
-//       'subway_exit',
-//        S(context).subwayExit,
-//       Icons.subway,
-//           (s) => (getEnumFromString<BeijingSubway>(BeijingSubway.values, s))!
-//           .getName(context));
-//   addDetail('type', S(context).type);
-//   addDetail('country_code', S(context).countryCode, Icons.map);
-//   addDetail('currency', S(context).currency, Icons.local_atm);
-//   addDetail('amount_other', S(context).amountOther, Icons.attach_money);
-//
-//   // all remaining data, clone to avoid concurrent modificationL
-//   final remain = {}..addAll(data);
-//   remain.forEach(
-//           (k, _) => addDetail(k, '${S(context).rawData}: $k', Icons.error));
-//
-//   return details;
-// }
-// CardData? detail;
-// var data1 = detail!.raw;
-
-List<Detail> parseCardDetails(
-    Map<String, dynamic> _data, BuildContext context) {
-  // make a copy and remove transactions & ndef, the remaining fields are all details
-  // var data = {}..addAll(detail!.raw["detail"]);
-  var data = {}..addAll(_data);
-  data.remove('transactions');
-  data.remove('ndef');
-  data.remove('data');
-
-  var details = <Detail>[];
-
-  void addDetail(String fieldName, String parsedName,
-      [IconData? icon, transformer]) {
-    _addDetail(data, details, fieldName, parsedName, icon, transformer);
-  }
-
-  // all cards
-  addDetail('card_number', 'Card Number', Icons.credit_card);
-  // THU
-  addDetail('internal_number', 'Internal Number', Icons.credit_card);
-  // China ID
-  addDetail('ic_serial', 'IC Serial No.', Icons.sim_card);
-  // China ID
-  addDetail('mgmt_number', 'Card Management No.', Icons.credit_card);
-  // PBOC
-  addDetail('name', 'Holder Name', Icons.person);
-  // PBOC
-  addDetail(
-      'balance', 'Balance', Icons.account_balance, formatTransactionBalance);
-  // T Union
-  addDetail('tu_type', 'TUnion Card Type', Icons.person);
-  // T Union
-  addDetail('province', 'Province', Icons.home);
-  // City Union / T Union
-  addDetail('city', 'City', Icons.home);
-  // City Union / T Union
-  addDetail(
-      'issue_date', 'Issue Date', Icons.calendar_today, formatTransactionDate);
-  // PBOC
-  addDetail('expiry_date', 'Expiry Date', Icons.calendar_today,
-      formatTransactionDate);
-  // THU
-  addDetail('display_expiry_date', 'Expiry Date on Card', Icons.calendar_today,
-      formatTransactionDate);
-  // PPSE
-  addDetail('expiration', 'Valid Until', Icons.calendar_today);
-  // PBOC
-  addDetail('purchase_atc', '${'Transaction Counter'} (${'Purchase'})',
-      Icons.exposure_neg_1);
-  // PBOC
-  addDetail('load_atc', '${'Transaction Counter'} (${'Load'})',
-      Icons.exposure_plus_1);
-  // PPSE
-  addDetail('atc', 'Transaction Counter', Icons.exposure_plus_1);
-  // PPSE
-  addDetail('pin_retry', 'Remaining PIN Retry Counter', Icons.lock);
-  // Mifare
-  addDetail('mifare_vendor', 'MIFARE Vendor', Icons.copyright);
-  addDetail('mifare_product_type', 'MIFARE Product Type', Icons.looks_one);
-  addDetail(
-      'mifare_product_subtype', 'MIFARE Product Subtype', Icons.looks_two);
-  addDetail(
-      'mifare_product_version', 'MIFARE Product Version', Icons.text_fields);
-  addDetail('mifare_product_name', 'MIFARE Product Version',
-      Icons.branding_watermark);
-  addDetail('mifare_storage_size', 'MIFARE Storage Size', Icons.format_size);
-  addDetail(
-      'mifare_production_date', 'MIFARE Production Date', Icons.date_range);
-  // all remaining data, clone to avoid concurrent modification
-  final remain = {}..addAll(data);
-  remain.forEach((k, _) => addDetail(k, '${'Raw data'}: $k', Icons.error));
-
-  return details;
-}
-
-void _addDetail(Map<dynamic, dynamic> data, List<Detail> details,
-    String fieldName, String parsedName,
-    [IconData? icon, transformer]) {
-  // optional parameters
-  if (icon == null) icon = Icons.list;
-  if (transformer == null) {
-    transformer = (s) => "$s";
-  }
-  // check existence and add to list
-  if (data[fieldName] != null) {
-    details.add(Detail(
-        name: parsedName, value: transformer(data[fieldName]), icon: icon));
-    data.remove(fieldName);
-  }
-}
-
-String? parseTechnologicalDetailKey(String? key) {
-  switch (key) {
-    case 'standard':
-      return 'Standard';
-    case 'protocolInfo':
-      return 'Protocol Infomation';
-    case 'id':
-      return 'Unique ID';
-    case 'dsfId':
-      return 'DSF ID';
-    case 'systemCode':
-      return 'System Code';
-    case 'applicationData':
-      return 'Application Data';
-    case 'type':
-      return 'Type';
-    case 'sak':
-      return 'SAK';
-    case 'hiLayerResponse':
-      return 'Higher Layer Response';
-    case 'historicalBytes':
-      return 'Historical Bytes';
-    case 'atqa':
-      return 'ATQA';
-    case 'manufacturer':
-      return 'Manufacturer';
-    case 'ndefAvailable':
-      return 'NDEF Available';
-    case 'ndefCanMakeReadOnly':
-      return 'NDEF Can Make Read Only';
-    case 'ndefWritable':
-      return 'NDEF Writable';
-    case 'ndefCapacity':
-      return 'NDEF Capacity';
-    case 'ndefType':
-      return 'NDEF Tag Type';
-    default:
-      return key;
-  }
-}
-
-// AppLocalizations S(BuildContext context) {
-//   return AppLocalizations.of(context)!;
-// }

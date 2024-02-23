@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-
-import 'Presentation/screen/home_screen.dart';
+import 'package:fvm_card_project/Presentation/screen/splash_screen.dart';
+import 'package:fvm_card_project/utils/colors/custom_color.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  Stripe.publishableKey = 'pk_test_51Oh58ESJMxlzEOpaWs9zmkBfAPUShgcVM20RdPlum2inLJutEkQ95fnZjBp33a3YsFZ9H0sHCsNpltq04tZb5Vd600gJiA28gy';
+  /// use your account publish key
+  Stripe.publishableKey = 'pk_test_51N57sBSC3tPkvwfjsQ8a6IUK6uNvAyqBZZwp8zuW7JnmuZSeuCQoYtbV4xtHAgdQO8wroVQ80je7DuFRorlu7yaW00o1nWzsjs';
+  SystemChrome.setSystemUIOverlayStyle( const SystemUiOverlayStyle(
+    systemStatusBarContrastEnforced: false,
+    statusBarColor: CustomColors.blue,
+    statusBarBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.light,
+  ));
   runApp(MyApp());
 }
 
@@ -15,9 +23,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: true,
-
-      home: HomeScreen()
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: CustomColors.white,
+        scaffoldBackgroundColor: CustomColors.white,
+      ),
+      home: Splash_Screen()
     );
   }
 

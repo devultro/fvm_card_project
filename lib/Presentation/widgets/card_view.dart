@@ -6,7 +6,7 @@ class CardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(10.0),
+      padding: const EdgeInsets.only(left: 10.0,right: 10.0,top: 20.0,bottom: 20.0),
       child: SizedBox(
         height: 200,
         child: Container(

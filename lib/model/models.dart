@@ -1,12 +1,4 @@
-import 'package:flutter/cupertino.dart';
-
-class Detail {
-  const Detail({this.name, this.value, this.icon});
-
-  final String? name;
-  final String? value;
-  final IconData? icon;
-}
+import 'package:flutter/material.dart';
 
 class ScriptDataModel {
   final String? action;
@@ -215,4 +207,3 @@ extension BeijingSubwayExtension on BeijingSubway {
   }
 }
 
-const String DEFAULT_CONFIG = '{}';
