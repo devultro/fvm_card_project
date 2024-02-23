@@ -414,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             const Text(
-              'Ready To Scan',
+              'Ready To Scan Your Device',
               style: TextStyle(fontSize: 30),
             ),
             SizedBox(
