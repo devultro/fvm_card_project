@@ -7,7 +7,7 @@ import 'package:fvm_card_project/data/api/api_services.dart';
 import 'package:fvm_card_project/utils/colors/custom_color.dart';
 import 'package:http/src/response.dart';
 
-class CardDetailsScreen extends StatelessWidget {
+class CardDetailsScreen extends StatefulWidget {
   CardDetailsScreen({
     super.key,
     required this.card_number,
@@ -15,15 +15,31 @@ class CardDetailsScreen extends StatelessWidget {
     required this.Card_Type,
   });
 
-  final String card_number;
-  final String expiry_date;
-  final String Card_Type;
+   late String card_number;
+   late String expiry_date;
+   late String Card_Type;
+
+  @override
+  State<CardDetailsScreen> createState() => _CardDetailsScreenState();
+}
+
+class _CardDetailsScreenState extends State<CardDetailsScreen> {
   String fname = '';
   String lname = '';
   final fNameController = TextEditingController();
   final lNameController = TextEditingController();
   final cvvController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    widget.card_number = '';
+    widget.expiry_date = '';
+    widget.Card_Type = '';
+    print('card details field is clear card details === ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +83,7 @@ class CardDetailsScreen extends StatelessWidget {
                                   style: TextStyle(
                                       fontSize: 14, color: Colors.white),
                                 ),
-                                Text(card_number,
+                                Text(widget.card_number,
                                     style: const TextStyle(
                                         fontSize: 24, color: Colors.white)),
                               ],
@@ -107,7 +123,7 @@ class CardDetailsScreen extends StatelessWidget {
                                           style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.white)),
-                                      Text(expiry_date,
+                                      Text(widget.expiry_date!,
                                           style: const TextStyle(
                                               fontSize: 20,
                                               color: Colors.white)),
@@ -159,7 +175,7 @@ class CardDetailsScreen extends StatelessWidget {
                         height: 20,
                       ),
                       MyTextField(
-                        controller: TextEditingController(text: card_number),
+                        controller: TextEditingController(text: widget.card_number),
                         obscureText: false,
                         redonly: true,
                       ),
@@ -189,7 +205,7 @@ class CardDetailsScreen extends StatelessWidget {
                             flex: 1,
                             child: MyTextField(
                               controller:
-                                  TextEditingController(text: expiry_date),
+                                  TextEditingController(text: widget.expiry_date),
                               redonly: true,
                               obscureText: false,
                             ),
@@ -200,7 +216,7 @@ class CardDetailsScreen extends StatelessWidget {
                         height: 20,
                       ),
                       MyTextField(
-                        controller: TextEditingController(text: Card_Type),
+                        controller: TextEditingController(text: widget.Card_Type),
                         obscureText: false,
                         redonly: true,
                       ),
@@ -250,9 +266,8 @@ class CardDetailsScreen extends StatelessWidget {
   }
 
   /// Genrate token
-  Future<String?> generateStripeToken(
-      { String? cvv, required context}) async {
-    var prAge = expiry_date.toString().split("/");
+  Future<String?> generateStripeToken({String? cvv, required context}) async {
+    var prAge = widget.expiry_date.toString().split("/");
     var year = prAge[0].trim();
     var month = prAge[1].trim();
     var cardHolderName = fname + lname;
@@ -261,6 +276,7 @@ class CardDetailsScreen extends StatelessWidget {
       type: TokenType.Card,
       name: cardHolderName,
     );
+
     /// create stripe instance
     await Stripe.instance.dangerouslyUpdateCardDetails(CardDetails(
       number: '4242424242424242',
@@ -278,7 +294,7 @@ class CardDetailsScreen extends StatelessWidget {
       print("Flutter Stripe token details === ${token.toJson()}");
       print("Flutter Stripe token id ===  ${token.id}");
 
-      Response response = await sendPostRequest(token.id,context);
+      Response response = await sendPostRequest(token.id, context);
       if (response.statusCode == 200) {
         Navigator.push(
             context,
@@ -287,23 +303,29 @@ class CardDetailsScreen extends StatelessWidget {
       } else if (response.statusCode == 400) {
         SnackBar snackBar = const SnackBar(
           content: Text('Bad Request'),
-          backgroundColor:  CustomColors.blue,
+          backgroundColor: CustomColors.blue,
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       } else if (response.statusCode == 404) {
         SnackBar snackBar = const SnackBar(
           content: Text('Not Found'),
-          backgroundColor:  CustomColors.blue,
+          backgroundColor: CustomColors.blue,
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       } else {
         SnackBar snackBar = const SnackBar(
           content: Text('Please fill correct details'),
-          backgroundColor:  CustomColors.blue,
+          backgroundColor: CustomColors.blue,
         );
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);      }
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
       return token.id;
     } on StripeException catch (e) {
+      SnackBar snackBar = SnackBar(
+        content: Text('${e.error.message}'),
+        backgroundColor: CustomColors.blue,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
       print("Flutter Stripe error === ${e.error.message}");
     }
     return null;

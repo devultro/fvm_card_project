@@ -26,6 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String? Expiry_Date;
   String? Card_Type;
 
+  // String? CardNumber = '4242424242424242';
+  // String? Expiry_Date = '25/09';
+  // String? Card_Type = 'visa';
+
   @override
   void initState() {
     // TODO: implement initState
@@ -53,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     CardNumber = '';
     Expiry_Date = '';
     Card_Type = '';
-    print('card details field is clear === ');
+    print('card details field is clear home screen=== ');
   }
 
   void showSnackbar(SnackBar snackBar) {
@@ -64,12 +68,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void onReceivedMessage(WebViewEvent ev) async {
     if (ev.reload) return; // Main doesn't care about reload events
+    print('value is not null 1 ====${ev.reload}');
     assert(ev.message != null);
 
     var scriptModel = ScriptDataModel.fromJson(json.decode(ev.message!));
-    if (scriptModel.data != null) {
+    print('value is not null 2 ====${ev.message}');
+    if (scriptModel.data != null /*&& scriptModel.data['card_type'] != null*/) {
       try {
-        log('[Main] Received action====== ${scriptModel.data['detail']} from script');
+        log('[Main] Received action====== ${scriptModel
+            .data['detail']} from script');
         Map<String, dynamic> detail = scriptModel.data['detail'];
         CardNumber = detail['card_number'];
         Expiry_Date = detail['expiration'];
@@ -301,23 +308,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             onTap: () async {
                               await _readTag(this.context);
                               log("CARD read");
-
-                              if (CardNumber != null && Expiry_Date != null && Card_Type != null) {
-                                Timer(const Duration(seconds: 4),(){
+                              await Future.delayed(Duration(seconds: 4));
+                              if (CardNumber!= null && Expiry_Date!= null && Card_Type!= null) {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => CardDetailsScreen(
-                                              card_number: CardNumber!, expiry_date: Expiry_Date!, Card_Type: Card_Type!)));
-                                });
-
+                                          builder: (context) =>
+                                              CardDetailsScreen(
+                                                  card_number: CardNumber!,
+                                                  expiry_date: Expiry_Date!,
+                                                  Card_Type: Card_Type!)));
                               } else {
                                 SnackBar snackBar = const SnackBar(
-                                  content: Text('Card is not read...please try again'),
-                                  backgroundColor:  CustomColors.blue,
+                                  content: Text(
+                                      'Card is not read...please try again'),
+                                  backgroundColor: CustomColors.blue,
                                 );
-                                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(snackBar);
                               }
+
                             },
                             child: const Padding(
                               padding: EdgeInsets.all(20),
@@ -392,7 +402,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildReadModal(BuildContext context) {
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.45,
+      height: MediaQuery
+          .of(context)
+          .size
+          .height * 0.45,
       child: Center(
         child: Column(
           children: <Widget>[

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fvm_card_project/Presentation/screen/home_screen.dart';
 import 'package:fvm_card_project/utils/colors/custom_color.dart';
 
-
 class CongratulationsScreen extends StatelessWidget {
   const CongratulationsScreen({super.key});
 
@@ -50,11 +49,11 @@ class CongratulationsScreen extends StatelessWidget {
                 height: 60,
                 child: TextButton(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const HomeScreen()));
+                          MaterialPageRoute(builder: (context) => HomeScreen()),
+                          (route) => false);
+                      print("pushNamedAndRemoveUntil");
                     },
                     style: TextButton.styleFrom(
                         backgroundColor: CustomColors.blue,

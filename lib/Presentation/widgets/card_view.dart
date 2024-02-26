@@ -50,7 +50,7 @@ class CardView extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Card name', style: TextStyle(fontSize: 14, color: Colors.white)),
-                                Text('SAVLIYA MILAN', style: TextStyle(fontSize: 20, color: Colors.white)),
+                                Text('_________', style: TextStyle(fontSize: 20, color: Colors.white)),
                               ],
                             ),
                           ),
